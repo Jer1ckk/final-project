@@ -1,0 +1,10 @@
+login 
+edit
+delete 
+show
+random
+create
+add question
+history
+time
+show high score
