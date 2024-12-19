@@ -210,7 +210,7 @@ int main() {
 
     cout << "You have logged in with permission level " << permission_level << ". Access granted." << endl;
 
-    system.save_to_file("test.txt");
+    //system.save_to_file("test.txt");
 
     return 0;
 }
