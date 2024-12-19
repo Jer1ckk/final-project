@@ -23,7 +23,6 @@ struct Quiz {
     string correct_ans;
 
     Quiz *next;
-
 };
 
 class login {
