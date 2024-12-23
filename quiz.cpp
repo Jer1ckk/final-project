@@ -2,27 +2,42 @@
 #include<fstream>
 #include<string>
 #include<sstream>
+#include <vector>
+#include <algorithm>
+#include <cstdlib>
+#include <ctime>
+#include <conio.h>
 
 using namespace std;
 
 struct Question{
     int id_question ;
     string question;
-    string ans1 , ans2 , ans3 , correct_ans;
+    string ans1 , ans2 , ans3 ;
+    char correct_ans ;
     Question* left ,* right;
+};
+
+struct History {
+    int id_student;
+    int math_score , logic_score , average_score;
+
+    History* next;
 };
 
 class Quiz {
     Question* root;
     int size ;
+    int score ;
 
 public: 
     Quiz () {
         root = nullptr ;
         size = 0;
+        score = 0;
     }
 
-    Question* insert( Question* root , int id , string question , string ans1, string ans2, string ans3, string correct_ans ) {
+    Question* insert( Question* root , int id , string question , string ans1, string ans2, string ans3, char correct_ans ) {
         
         if ( root == nullptr ) {
             
@@ -46,7 +61,7 @@ public:
         return root;    
     }
 
-    void add(int id , string question , string ans1, string ans2, string ans3, string correct_ans) {
+    void add(int id , string question , string ans1, string ans2, string ans3, char correct_ans) {
         root = insert (root , id , question , ans1, ans2, ans3 , correct_ans) ;
     }
 
@@ -122,6 +137,26 @@ public:
         delete root;
     }
 
+    Question* find_quest(Question* root, int id) {
+        while (root != nullptr) {
+            if (id == root->id_question) {
+                return root;
+            } 
+            else if (id < root->id_question) {
+                root = root->left;
+            } 
+            else {  
+            root = root->right;
+            }       
+        }
+        return nullptr; 
+    }
+
+    Question* find_question(int id) {
+        return find_quest(root, id);
+    }
+
+
     bool search(Question* root , int id) {
         while ( root != nullptr ) {
             if (id == root->id_question) {
@@ -133,8 +168,8 @@ public:
             else if ( id < root->id_question ) {
                 root = root->left ;
             }
-            return false ;
         }
+        return false ;
     }
 
     void search_question(int id) {
@@ -147,6 +182,110 @@ public:
         }
     }
     
+    void display_question(int id) {
+        Question* current = root ;
+        while (current != nullptr){
+            if (id==current->id_question){
+                cout << "Question ID: " << current->id_question << endl;
+                cout << current->question << endl;
+                cout << "a. " << current->ans1 << "\n";
+                cout << "b. " << current->ans2 << "\n";
+                cout << "c. " << current->ans3 << "\n";
+                cout << "Correct Answer: " << current->correct_ans << endl;
+                return;
+            }
+            else if ( id < current->id_question ) {
+                current = current->left ;
+            }
+            else {
+                current = current->right ;
+            }
+        }
+        cout << "Question with ID " << id << " does not exist." << endl ;
+    }
+
+    void read_data_from_file(int choice){
+        fstream f;
+        string file_name;
+        if ( choice == 1 ) {
+            file_name = "math.csv" ;
+        }
+        else if ( choice == 2 ) {
+            file_name = "physic.csv" ;
+        } 
+        
+        f.open(file_name, ios::in);
+        if (!f.is_open()) {
+            cout << "Error: Unable to open file!" << endl;
+            return ;
+        }
+
+        string line;
+        while (getline(f, line)) {
+            stringstream ss(line);
+            string temp_id, q, anw1, anw2, anw3;
+            char correct;
+
+            getline(ss, temp_id, ',');
+            getline(ss, q, ',');
+            getline(ss, anw1, ',');
+            getline(ss, anw2, ',');
+            getline(ss, anw3, ',');
+            ss >> correct;
+
+            int id = stoi(temp_id);
+            add(id, q, anw1, anw2, anw3, correct);
+        }
+        f.close();
+    }
+
+    void random(Question *root , int quantity){
+        char answer;
+        srand(static_cast<unsigned>(time(0)));
+
+        vector<int> numbers;
+        for (int i = 1; i <= 50; ++i) {
+            numbers.push_back(i);
+        }
+        random_shuffle(numbers.begin(), numbers.end());
+
+        cout << "Random Questions (no duplicates):" << endl;
+        for (int i = 0; i < quantity; i++) {
+            int question_id = numbers[i];
+
+            Question* current = find_question(question_id);
+            if (current == nullptr) {
+                continue;
+            }
+
+            system("cls");
+            cout << "Question: " << i+1 << endl;
+            cout << current->question << endl;
+            cout << "a. " << current->ans1 << "\n";
+            cout << "b. " << current->ans2 << "\n";
+            cout << "c. " << current->ans3 << "\n";
+        
+            do {
+                cout << "Please Enter the Answer (a/b/c): ";
+                cin >> answer;
+                answer = tolower(answer);
+            } while (answer != 'a' && answer != 'b' && answer != 'c');
+
+
+            if (answer == tolower(current->correct_ans)) {
+                score++;
+            } 
+        }
+        display_Score(quantity);
+    }
+
+    void display_Score(int total_questions){
+        cout << "\nQuiz Complete! Your score: " << score << "/" << total_questions << endl;
+    }
+
+    void random_question(int quantity) {
+        random(root, quantity);
+    }
 
     ~Quiz(){
         delete_tree(root);
@@ -154,39 +293,11 @@ public:
 
 };
 
-int main () {
+int main() {
+    Quiz question;
 
-    Quiz question ;
+    question.read_data_from_file(2);
+    question.random_question(5);
 
-    fstream f;
-    string line;
-
-    f.open("math.csv", ios::in);
-    if (!f.is_open()) {
-        cout << "Error: Unable to open file!" << endl;
-        return 1;
-    }
-    
-    while (getline(f, line)) {
-
-        stringstream ss(line);
-        string temp_id, q, anw1, anw2 , anw3, correct ;
-
-        getline(ss, temp_id, ',');
-        getline(ss, q, ',');
-        getline(ss, anw1, ',');
-        getline(ss, anw2, ',');
-        getline(ss, anw3, ',');
-        getline(ss, correct, '\n');
-
-        int id = stoi(temp_id);   
-
-        question.add(id,q,anw1,anw2,anw3,correct);
-
-    }
-
-    f.close();
-
-    question.inorder_();
-    return 0 ;
+    return 0;
 }
