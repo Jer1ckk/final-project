@@ -556,9 +556,11 @@ public:
             root->average_score = (math_score + physic_score) / 2.0;
             root->left = nullptr;
             root->right = nullptr;
-        } else if (id_student < root->id_student) {
+        }
+        else if (id_student < root->id_student) {
             root->left = insert_history(root->left, id_student, math_score, physic_score);
-        } else if (id_student > root->id_student) {
+        }
+        else if (id_student > root->id_student) {
             root->right = insert_history(root->right, id_student, math_score, physic_score);
         }
         return root;
@@ -628,7 +630,6 @@ public:
         return nullptr;
     }
 
-
     History* find_id_student_history(int id ){
         return find_id_student(history_root , id );
     }
@@ -663,8 +664,6 @@ public:
     }
 
 };
-
-
 
 void teacher_menu(Quiz& math_quiz, Quiz& physic_quiz) {
     int choice, id, id_question;
