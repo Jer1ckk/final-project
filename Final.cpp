@@ -7,6 +7,10 @@
 #include <cstdlib>
 #include <ctime>
 #include <conio.h>
+#include <chrono>
+#include <thread>
+#include <limits>
+
 using namespace std;
 
 struct Account {
@@ -140,8 +144,25 @@ public:
             }
             temp = temp->next;
         }
-    cout << "Invalid name or password. Please try again." << endl;
-    return 0;
+        cout << "Invalid name or password. Please try again." << endl;
+        return 0;
+    }
+
+    int login_id(string name , string password) {
+        if (is_empty()) {
+            cout << "No accounts in the system. Please create an account first." << endl;
+            return -1;
+        }
+        int id;
+        Account *temp = head;
+
+        while (temp != NULL) {
+            if (temp->name == name && temp->password == password) {
+                return temp->acc_id;
+            }
+            temp = temp->next;
+        }
+        return 0;
     }
 
     void save_to_file() {
@@ -445,7 +466,7 @@ public:
         f.close();
     }
 
-    void random(Question *root , int quantity){
+    void random(Question* root, int quantity) {
         char answer;
         srand(static_cast<unsigned>(time(0)));
 
@@ -464,26 +485,35 @@ public:
                 continue;
             }
 
-            system("cls");
-            cout << "Question: " << i+1 << endl;
+            system("cls");  // Clears the screen for the next question
+            cout << "Question: " << i + 1 << endl;
             cout << current->question << endl;
             cout << "a. " << current->ans1 << "\n";
             cout << "b. " << current->ans2 << "\n";
             cout << "c. " << current->ans3 << "\n";
 
-            do {
-                cout << "Please Enter the Answer (a/b/c): ";
+            bool answered = false;
+
+            while (!answered) {
+                cout << "Your answer (a/b/c): ";
                 cin >> answer;
                 answer = tolower(answer);
-            } while (answer != 'a' && answer != 'b' && answer != 'c');
 
-
-            if (answer == tolower(current->correct_ans)) {
-                score++;
+                if (answer == 'a' || answer == 'b' || answer == 'c') {
+                    answered = true;
+                    if (answer == tolower(current->correct_ans)) {
+                        score++;
+                    }
+                } else {
+                    cout << "Invalid input. Enter 'a', 'b', or 'c'.\n";
+                    cin.clear(); // Clear any invalid input flags
+                    cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); // Ignore leftover input
+                }
             }
         }
         display_Score(quantity);
-    }
+    }   
+
 
     void display_Score(int total_questions){
         cout << "\nQuiz Complete! Your score: " << score << "/" << total_questions << endl;
@@ -581,9 +611,11 @@ public:
             cout << "Physics Score: " << root->physic_score << endl;
             cout << "Average Score: " << root->average_score << endl;
             return;
-        } else if (id_student < root->id_student) {
+        } 
+        else if (id_student < root->id_student) {
             display_student_scores(root->left, id_student);
-        } else {
+        } 
+        else {
             display_student_scores(root->right, id_student);
         }
     }
@@ -607,10 +639,12 @@ public:
         display_all_scores(history_root);
     }
 
-    void check_and_create_student_history(int id_student, int math_score, int physic_score) {
+    void check_and_create_student_history(int id_student) {
          History* existing_student = find_id_student(history_root, id_student);
 
         if (existing_student == nullptr) {
+            int math_score = 0 ;
+            int physic_score = 0 ;
             add_student_score(id_student, math_score, physic_score);
         }
     }
@@ -796,18 +830,17 @@ void teacher_menu(Quiz& math_quiz, Quiz& physic_quiz) {
     } while (choice != 5);
 }
 
-
 void admin_menu(login& operation, Quiz& math_quiz, Quiz& physic_quiz) {
     int choice;
     do {
-        cout << "===== Admin Menu =====" << endl;
-        cout << "1. Create a teacher account" << endl;
-        cout << "2. Create a student account" << endl;
-        cout << "3. Delete a user account" << endl;
-        cout << "4. View all users" << endl;
-        cout << "5. View all quizzes" << endl;
-        cout << "6. Log out" << endl;
-        cout << "Enter your choice: ";
+        cout << "===== Admin Menu =====" << endl ;
+        cout << "1. Create a teacher account" << endl ;
+        cout << "2. Create a student account" << endl ;
+        cout << "3. Delete a user account" << endl ;
+        cout << "4. View all users" << endl ;
+        cout << "5. View all quizzes" << endl ;
+        cout << "6. Log out" << endl ;
+        cout << "Enter your choice: " ;
         cin >> choice;
 
         switch(choice) {
@@ -876,7 +909,7 @@ void admin_menu(login& operation, Quiz& math_quiz, Quiz& physic_quiz) {
     } while (choice != 6);
 }
 
-void student_menu(Quiz& math_quiz, Quiz& physic_quiz) {
+void student_menu(Quiz& math_quiz, Quiz& physic_quiz , int student_id) {
     int choice;
     do {
         cout << "===== Student Menu =====" << endl;
@@ -890,9 +923,11 @@ void student_menu(Quiz& math_quiz, Quiz& physic_quiz) {
         switch(choice) {
             case 1:
                 math_quiz.random_question(10);
+                math_quiz.check_and_create_student_history(student_id);
                 break;
             case 2:
                 physic_quiz.random_question(10);
+
                 break;
             case 3:
                 // This can display student's past quiz results
@@ -919,6 +954,7 @@ int main() {
     string login_email;
     string pass_login;
     int permission_level;
+    int id ;
 
     do {
 
@@ -928,6 +964,7 @@ int main() {
         cin >> pass_login;
 
         permission_level = operation.login_permission(login_email, pass_login);
+        id = operation.login_id(login_email , pass_login) ;
 
         if (permission_level == -1) {
             cout << "No accounts in the system. Exiting..." << endl;
@@ -940,7 +977,7 @@ int main() {
     cout << "You have logged in with permission level " << permission_level << ". Access granted." << endl;
 
     if (permission_level == 1) {
-        student_menu( math_quiz , physic_quiz );
+        student_menu( math_quiz , physic_quiz , id );
     }
     else if (permission_level == 2) {
         teacher_menu( math_quiz , physic_quiz );
@@ -948,6 +985,6 @@ int main() {
     else if (permission_level == 3) {
         admin_menu( operation , math_quiz , physic_quiz );
     }
-    return 0;
+    return 0 ;
 }
 
